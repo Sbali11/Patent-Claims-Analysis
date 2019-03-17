@@ -3,6 +3,7 @@ from lxml import etree
 import claims
 import os
 from parsing import *
+import collections
 
 
 def add_to_dict(claim_xml_element, patent_edge_dict, patent_info_dict):
@@ -32,7 +33,7 @@ def create_patent_dict(patent):
     print(patent_edge_dict)
     return (patent_edge_dict, patent_info_dict)
 
-class Graph(object):
+class ClaimSet(object):
     nodes_dict = {}
     children = {}
 
@@ -41,11 +42,12 @@ class Graph(object):
             self.depth = depth
             self.parents = parents_set
             self.info = info
+            self.number = number
             nodes_dict[number] = self
             for parent in parents_set:
                 if(parent in children):
                     children[parent].add(self)
-                else
+                else:
                     children[parent] = {self}
 
                 if(parent in nodes_dict):
@@ -53,16 +55,53 @@ class Graph(object):
                 else:
                     nodes_dict[parent] = Node(patent_edge_dict[parent], depth+1, patent_info_dict[parent], parent)
 
+        def __hash__(self):
+        	return hash(self.number)
+
     def __init__(self, patent):
         self.patent_edge_dict, self.patent_info_dict = create_patent_dict(patent)
         for claim in self.patent_info_dict:
             if(claim not in nodes_dict):
                 Node(self.patent_edge_dict[claim], 0, self.patent_info_dict[claim], claim)
 
-    def isIndependent(self, number):
+        def find_all_connected_comps():
+	    connected_comps = {}
+	    assert(number in nodes_dict)
+	    undirected_edges = {}
+
+	    for child in self.patent_edge_dict:
+	        parents = self.patent_edge_dict[edge]
+	        for parent in parents:
+	            if child in undirected_edges:
+	                undirected_edges[child].add(parent)
+	            else:
+	        	undirected_edges[child] = {parent}
+	            if parent in undirected_edges:
+	            	undirected_edges[parent].add(child)
+	            else:
+	            	undirected_edges[parent] = {child}
+
+	    for leaf in self.find_leaves():
+
+	        seen, queue = set([leaf]), collections.deque([leaf])
+	        while queue:
+	            vertex = queue.popleft()
+	            for node in undirected_edges[vertex]:
+	                if node not in seen:
+	                    seen.add(node)
+	                    queue.append(node)
+	                connected_comps[leaf] = seen
+
+	        return connected_comps
+
+	self.connected_comps = find_all_connected_comps()
+
+
+
+    def is_independent(self, number):
         assert(number in nodes_dict)
         return len(nodes_dict[number].parents_set)==0
-    
+
     def num_claims(self):
         return len(nodes_dict)
 
@@ -80,10 +119,10 @@ class Graph(object):
         independent_claims = filter(nodes, isIndependent)
         return independent_claims
 
-    def num_independent_claims(self): 
+    def num_independent_claims(self):
         return len(self.find_independent_claims())
 
-    def findLeaves(self):
+    def find_leaves(self):
         nodes = [node for node in nodes_dict]
         leaves = filter(nodes, lambda node: node.depth==0)
         return leaves
@@ -97,17 +136,14 @@ class Graph(object):
             return set()
         return children[number]
 
+    def get_connected_comp(self, number):
+    	for leaf in self.connected_comps:
+    		if number in self.connected_comps[leaf]:
+    			return self.connected_comps[leaf]
 
-    def find_connected_comp(self, number):
-        connected_comps = set()
-        assert(number in nodes_dict)
-        undirected_edges = []
-        for child in self.patent_edge_dict:
-            parent = self.patent_edge_dict[edge]
-            undirected_edges+= [(child, parent), (parent, child)]
 
-        for leaf in self.findLeaves():
-            visited = set()
+
+
             #if(leaf not in visited):
 
 

@@ -2,8 +2,11 @@ from claim_tree import *
 
 def processAllPatents(allPatentsTree):
     patentsProcessed = 0
+    
     for app in allPatentsTree.iter("us-patent-grant"):
-        create_patent_dict(app)
+        edges, infos = create_patent_dict(app)
+        graph_class = ClaimSet(app)
+
         patentsProcessed += 1
         if patentsProcessed % 1000 == 0:
             print(patentsProcessed,' patents processed')
