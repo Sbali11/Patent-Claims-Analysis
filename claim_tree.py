@@ -108,8 +108,8 @@ class Graph(object):
 
         for leaf in self.findLeaves():
             visited = set()
-            if(leaf not in visited):
-                
+            #if(leaf not in visited):
+
 
 
 
