@@ -19,7 +19,7 @@ def _print_tree(r, level):
 
 def process_nouns(doc):
     for chunk in doc.noun_chunks:
-        print(f"'{chunk.text}', base={chunk.root.text}, dep={chunk.root.dep_}, child of '{chunk.root.head.text}'")
+        print("'{chunk.text}', base={chunk.root.text}, dep={chunk.root.dep_}, child of '{chunk.root.head.text}'")
 
 def print_tree(doc):
     r = get_root(doc)

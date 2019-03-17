@@ -1,3 +1,4 @@
+*.pyc
 patents/
 venv/
 __pycache__/

@@ -176,7 +176,7 @@ if __name__ == "__main__":
     # inputFileName       = "/media/alderucci/Data/patent data/ipg181113.xml"
     # singleRootFileName  = "/media/alderucci/Data/patent data/ipg181113_SR.xml"
     # create_single_root_file_from_PTO_file(inputFileName, singleRootFileName)
-    zipFileName = "PatentData1.zip"
+    zipFileName = "ipg190226.zip"
     isPatent = True
 
     zipFileFullPath = os.path.join(dataDirectory, zipFileName)
