@@ -56,7 +56,7 @@ class ClaimSet(object):
                     nodes_dict[parent] = Node(patent_edge_dict[parent], depth+1, patent_info_dict[parent], parent)
 
         def __hash__(self):
-        	return hash(self.number)
+            return hash(self.number)
 
     def __init__(self, patent):
         self.patent_edge_dict, self.patent_info_dict = create_patent_dict(patent)
@@ -65,36 +65,36 @@ class ClaimSet(object):
                 Node(self.patent_edge_dict[claim], 0, self.patent_info_dict[claim], claim)
 
         def find_all_connected_comps():
-	    connected_comps = {}
-	    assert(number in nodes_dict)
-	    undirected_edges = {}
+            connected_comps = {}
+            assert(number in nodes_dict)
+            undirected_edges = {}
+    
+            for child in self.patent_edge_dict:
+                parents = self.patent_edge_dict[edge]
+                for parent in parents:
+                    if child in undirected_edges:
+                        undirected_edges[child].add(parent)
+                    else:
+                        undirected_edges[child] = {parent}
+                    if parent in undirected_edges:
+                        undirected_edges[parent].add(child)
+                    else:
+                        undirected_edges[parent] = {child}
+    
+            for leaf in self.find_leaves():
+    
+                seen, queue = set([leaf]), collections.deque([leaf])
+                while queue:
+                    vertex = queue.popleft()
+                    for node in undirected_edges[vertex]:
+                        if node not in seen:
+                            seen.add(node)
+                            queue.append(node)
+                        connected_comps[leaf] = seen
+    
+                return connected_comps
 
-	    for child in self.patent_edge_dict:
-	        parents = self.patent_edge_dict[edge]
-	        for parent in parents:
-	            if child in undirected_edges:
-	                undirected_edges[child].add(parent)
-	            else:
-	        	undirected_edges[child] = {parent}
-	            if parent in undirected_edges:
-	            	undirected_edges[parent].add(child)
-	            else:
-	            	undirected_edges[parent] = {child}
-
-	    for leaf in self.find_leaves():
-
-	        seen, queue = set([leaf]), collections.deque([leaf])
-	        while queue:
-	            vertex = queue.popleft()
-	            for node in undirected_edges[vertex]:
-	                if node not in seen:
-	                    seen.add(node)
-	                    queue.append(node)
-	                connected_comps[leaf] = seen
-
-	        return connected_comps
-
-	self.connected_comps = find_all_connected_comps()
+        self.connected_comps = find_all_connected_comps()
 
 
 
@@ -137,9 +137,9 @@ class ClaimSet(object):
         return children[number]
 
     def get_connected_comp(self, number):
-    	for leaf in self.connected_comps:
-    		if number in self.connected_comps[leaf]:
-    			return self.connected_comps[leaf]
+        for leaf in self.connected_comps:
+            if number in self.connected_comps[leaf]:
+                return self.connected_comps[leaf]
 
 
 
