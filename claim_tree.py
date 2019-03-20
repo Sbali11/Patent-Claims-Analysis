@@ -36,37 +36,37 @@ def create_patent_dict(patent):
     print(patent_edge_dict)
     return (patent_edge_dict, patent_info_dict)
 
+class Node(object):
+    def __init__(self, patent, parents_set, depth, info, number):
+        self.depth = depth
+        self.parents = parents_set
+        self.info = info
+        self.number = number
+        patent.nodes_dict[number] = self
+        for parent in parents_set:
+            if(parent in patent.children):
+                patent.children[parent].add(self)
+            else:
+                patent.children[parent] = {self}
+
+            if(parent in patent.nodes_dict):
+                patent.nodes_dict[parent].depth= max(patent.nodes_dict.get[parent].depth, depth+1)
+            else:
+                patent.nodes_dict[parent] = Node(patent, patent.patent_edge_dict[parent], depth+1, patent.patent_info_dict[parent], parent)
+
+    def __hash__(self):
+        return hash(self.number)
+
+
 class ClaimSet(object):
     
-
-    class Node(object):
-        def __init__(patent, self, parents_set, depth, info, number):
-            self.depth = depth
-            self.parents = parents_set
-            self.info = info
-            self.number = number
-            patent.nodes_dict[number] = self
-            for parent in parents_set:
-                if(parent in patent.children):
-                    patent.children[parent].add(self)
-                else:
-                    patent.children[parent] = {self}
-
-                if(parent in patent.nodes_dict):
-                    patent.nodes_dict[parent].depth= max(patent.nodes_dict.get[parent].depth, depth+1)
-                else:
-                    patent.nodes_dict[parent] = Node(patent.patent_edge_dict[parent], depth+1, patent.patent_info_dict[parent], parent)
-
-        def __hash__(self):
-            return hash(self.number)
-
     def __init__(self, patent):
         self.patent_edge_dict, self.patent_info_dict = create_patent_dict(patent)
         self.nodes_dict = {}
         self.children = {}
         for claim in self.patent_info_dict:
             if(claim not in self.nodes_dict):
-                self.Node(self.patent_edge_dict[claim], 0, self.patent_info_dict[claim], claim)
+                Node(self, self.patent_edge_dict.get(claim, set()), 0, self.patent_info_dict[claim], claim)
         
         def find_all_connected_comps():
             connected_comps = {}
@@ -125,7 +125,7 @@ class ClaimSet(object):
 
     def find_leaves(self):
         nodes = [node for node in self.nodes_dict]
-        leaves = filter(lambda node: node.depth==0, nodes)
+        leaves = filter(lambda node: self.nodes_dict[node].depth==0, nodes)
         return leaves
 
     def num_dependent_claims(self):
