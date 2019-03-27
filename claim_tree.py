@@ -11,15 +11,18 @@ def add_to_dict(claim_xml_element, patent_edge_dict, patent_info_dict):
     patent_info_dict[claim_number_string]= claim_xml_element.text
     # get parents if any
     if(claim_number_string not in patent_edge_dict):
-        patent_edge_dict={}
+        patent_edge_dict[claim_number_string]={}
     parent_claims_strings = []
+    count = 0
     for p in claim_xml_element.iter("claim-ref"):
+        count+=1
         parent_claim_num = p.get("idref")
         parent_claims_strings.append(parent_claim_num)
-        if parent_claim_num in patent_edge_dict:
-            patent_edge_dict[claim_number_string].add(parent_claim_num)
+        if parent_claim_num in patent_edge_dict.get(claim_number_string, {}):
+            patent_edge_dict[claim_number_string].add(parent_claim_num[4:])
         else:
-            patent_edge_dict[claim_number_string] = {parent_claim_num}
+            patent_edge_dict[claim_number_string] = {parent_claim_num[4:]}
+    #return (patent_edge_dict, patent_info_dict)
 
 def create_patent_dict(patent):
     patent_edge_dict = {}
@@ -31,9 +34,7 @@ def create_patent_dict(patent):
     # Also note: design patents always have one vacuous claim (unnumbered)
     if is_utility_patent(typeOfPatent):
         for claimXML in patent.iter("claim"):
-            claim = add_to_dict(claimXML, patent_edge_dict, patent_info_dict)
-
-    print(patent_edge_dict)
+            add_to_dict(claimXML, patent_edge_dict, patent_info_dict)
     return (patent_edge_dict, patent_info_dict)
 
 class Node(object):
@@ -50,7 +51,7 @@ class Node(object):
                 patent.children[parent] = {self}
 
             if(parent in patent.nodes_dict):
-                patent.nodes_dict[parent].depth= max(patent.nodes_dict.get[parent].depth, depth+1)
+                patent.nodes_dict[parent].depth= max(patent.nodes_dict[parent].depth, depth+1)
             else:
                 patent.nodes_dict[parent] = Node(patent, patent.patent_edge_dict[parent], depth+1, patent.patent_info_dict[parent], parent)
 
@@ -73,7 +74,7 @@ class ClaimSet(object):
             undirected_edges = {}
     
             for child in self.patent_edge_dict:
-                parents = self.patent_edge_dict[edge]
+                parents = self.patent_edge_dict[child]
                 for parent in parents:
                     if child in undirected_edges:
                         undirected_edges[child].add(parent)
@@ -83,22 +84,20 @@ class ClaimSet(object):
                         undirected_edges[parent].add(child)
                     else:
                         undirected_edges[parent] = {child}
-    
+        
+            
             for leaf in self.find_leaves():
-    
                 seen, queue = set([leaf]), collections.deque([leaf])
                 while queue:
                     vertex = queue.popleft()
-                    for node in undirected_edges[vertex]:
+                    for node in undirected_edges.get(vertex, {}):
                         if node not in seen:
                             seen.add(node)
                             queue.append(node)
                         connected_comps[leaf] = seen
-    
                 return connected_comps
 
         self.connected_comps = find_all_connected_comps()
-
     def is_independent(self, number):
         assert(number in self.nodes_dict)
         return len(self.nodes_dict[number].parents_set)==0
