@@ -45,7 +45,11 @@ def add_to_dict(claim_xml_element, patent_edge_dict, patent_info_dict):
             patent_edge_dict[claim_number_string].add(parent_claim_num[4:])
         else:
             patent_edge_dict[claim_number_string] = {parent_claim_num[4:]}
+<<<<<<< HEAD
 
+=======
+    #return (patent_edge_dict, patent_info_dict)
+>>>>>>> 02d0632551c8acba84e5a278b575d13c998f05fa
 
 
 '''
@@ -66,7 +70,10 @@ def create_patent_dict(patent):
     if is_utility_patent(typeOfPatent):
         for claimXML in patent.iter("claim"):
             add_to_dict(claimXML, patent_edge_dict, patent_info_dict)
+<<<<<<< HEAD
     else: print("is design patent\n")
+=======
+>>>>>>> 02d0632551c8acba84e5a278b575d13c998f05fa
     return (patent_edge_dict, patent_info_dict)
 
 
@@ -134,8 +141,13 @@ class ClaimSet(object):
                         undirected_edges[parent].add(child)
                     else:
                         undirected_edges[parent] = {child}
+<<<<<<< HEAD
 
 
+=======
+        
+            
+>>>>>>> 02d0632551c8acba84e5a278b575d13c998f05fa
             for leaf in self.find_leaves():
                 seen, queue = set([leaf]), collections.deque([leaf])
                 while queue:
@@ -148,8 +160,11 @@ class ClaimSet(object):
                 return connected_comps
 
         self.connected_comps = find_all_connected_comps()
+<<<<<<< HEAD
 
     #true if a claim has no parents (ie: the claim refers to no other claim), else false
+=======
+>>>>>>> 02d0632551c8acba84e5a278b575d13c998f05fa
     def is_independent(self, number):
         assert(number in self.nodes_dict)
         return len(self.nodes_dict[number].parents_set)==0
