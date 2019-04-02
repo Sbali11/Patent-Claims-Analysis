@@ -1,4 +1,8 @@
 from claim_tree import *
+from spacy.lang.en.stop_words import STOP_WORDS
+from string import punctuation
+stopwords = list(STOP_WORDS)
+nlp = spacy.load('en')
 
 def processAllPatents(allPatentsTree):
     patentsProcessed = 0
@@ -39,10 +43,13 @@ def combineInfo(graph):
 		number = nodes[node].number
 		for ancestor in ancestors:
 			info += "\n" + nodes[ancestor].info
+
 		combined_info_dict[number] = info
+		info_nlp = nlp(info)
+		info_tokens = [token.text for token in info_nlp]
+
 		print("Claim number %s\n %s\n\n" %(number, info))
 	return combined_info_dict
-
 
 def processAllInFolder(folderPath, isPatent):
     for single_root_file in os.listdir(folderPath):

@@ -2,7 +2,6 @@
 import spacy
 from spacy import displacy
 import re
-
 import sys
 import spaceyUtilities as spu
 
