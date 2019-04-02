@@ -7,30 +7,29 @@ import collections
 
 '''
 add_to_dict(claim_xml_element, patent_edge_dict, patent_info_dict) :
-Takes in a claim, the edge dictionary, and the info dictionary, and updates 
-the dictionary with this claim. 
+Takes in a claim, the edge dictionary, and the info dictionary, and updates
+the dictionary with this claim.
 claim_xml_element: a claim in the patent
 patent_edge_dict: dictionary with child claims (keys) and set of parent claims (values)
 patent_info_dict: dictionary with all claims (keys) and their info text (values)
-''' 
+'''
 def add_to_dict(claim_xml_element, patent_edge_dict, patent_info_dict):
     claim_number_string = claim_xml_element.get("num")
     claimtext2 = ""
-    afterClaimRef = ""
     for el in claim_xml_element.iter():
         claimtext2 += '\n'
         # print('Element:', el, ' tag=', el.tag, ', num children=', len(list(el)))
         if el.text != None:
             element_text = el.text
             claimtext2 += element_text
-    
+
         if el.tail != None:
             element_text = el.tail
+            # if element_text != '\n':
             if len(element_text.strip()) > 0:
                 # assert len(element_text) > 0, "element_text of claim is empty"
                 element_text = element_text.strip()
                 claimtext2 += element_text
-                afterClaimRef += element_text
 
     patent_info_dict[claim_number_string]= claimtext2
     # get parents if any
@@ -46,11 +45,7 @@ def add_to_dict(claim_xml_element, patent_edge_dict, patent_info_dict):
             patent_edge_dict[claim_number_string].add(parent_claim_num[4:])
         else:
             patent_edge_dict[claim_number_string] = {parent_claim_num[4:]}
-<<<<<<< HEAD
 
-=======
-    #return (patent_edge_dict, patent_info_dict)
->>>>>>> 02d0632551c8acba84e5a278b575d13c998f05fa
 
 
 '''
@@ -59,7 +54,7 @@ Takes in a patent and creates the patent edge dictionary and the info dictionary
 Output:
 patent_edge_dict: dictionary with child claims (keys) and set of parent claims (values)
 patent_info_dict: dictionary with all claims (keys) and their info text (values)
-''' 
+'''
 def create_patent_dict(patent):
     patent_edge_dict = {}
     patent_info_dict = {}
@@ -71,10 +66,7 @@ def create_patent_dict(patent):
     if is_utility_patent(typeOfPatent):
         for claimXML in patent.iter("claim"):
             add_to_dict(claimXML, patent_edge_dict, patent_info_dict)
-<<<<<<< HEAD
     else: print("is design patent\n")
-=======
->>>>>>> 02d0632551c8acba84e5a278b575d13c998f05fa
     return (patent_edge_dict, patent_info_dict)
 
 
@@ -111,8 +103,8 @@ Creating a ClaimSet object for a patent causes it to create the entire graph of 
 class ClaimSet(object):
 
     def __init__(self, patent):
-    	#patent_edge_dict maps children to a set of parents
-    	#patent_info_dict maps claims to their info text
+        #patent_edge_dict maps children to a set of parents
+        #patent_info_dict maps claims to their info text
         self.patent_edge_dict, self.patent_info_dict = create_patent_dict(patent)
         #nodes_dict maps each claim ID to the Node object for that claim
         self.nodes_dict = {}
@@ -124,8 +116,8 @@ class ClaimSet(object):
 
 
         '''
-		connected_comps is a dictionary with the leaves as keys and the entire 
-		connected component of each leaf as the value (implemented DFS, basically)
+        connected_comps is a dictionary with the leaves as keys and the entire
+        connected component of each leaf as the value (implemented DFS, basically)
         '''
         def find_all_connected_comps():
             connected_comps = {}
@@ -142,13 +134,8 @@ class ClaimSet(object):
                         undirected_edges[parent].add(child)
                     else:
                         undirected_edges[parent] = {child}
-<<<<<<< HEAD
 
 
-=======
-        
-            
->>>>>>> 02d0632551c8acba84e5a278b575d13c998f05fa
             for leaf in self.find_leaves():
                 seen, queue = set([leaf]), collections.deque([leaf])
                 while queue:
@@ -161,16 +148,13 @@ class ClaimSet(object):
                 return connected_comps
 
         self.connected_comps = find_all_connected_comps()
-<<<<<<< HEAD
 
     #true if a claim has no parents (ie: the claim refers to no other claim), else false
-=======
->>>>>>> 02d0632551c8acba84e5a278b575d13c998f05fa
     def is_independent(self, number):
         assert(number in self.nodes_dict)
         return len(self.nodes_dict[number].parents_set)==0
 
-	#number of claims in the patent
+    #number of claims in the patent
     def num_claims(self):
         return len(self.nodes_dict)
 
@@ -200,7 +184,7 @@ class ClaimSet(object):
         leaves = filter(lambda node: self.nodes_dict[node].depth==0, nodes)
         return leaves
 
-    #number of dependent claims in the patent 
+    #number of dependent claims in the patent
     def num_dependent_claims(self):
         return len(self.nodes_dict) - self.num_independent_claims()
 
