@@ -1,8 +1,21 @@
 from claim_tree import *
-from spacy.lang.en.stop_words import STOP_WORDS
-from string import punctuation
-stopwords = list(STOP_WORDS)
+
+import re
+from gensim.summarization.summarizer import summarize
+from gensim.summarization import keywords
+import spacy
+import requests
+
+nlpNP = spacy.load('en', disable = ['textcat'])
 nlp = spacy.load('en')
+nlpL = spacy.load('en', disable=['ner', 'parser'])
+nlpL.add_pipe(nlpL.create_pipe('sentencizer'))
+
+
+StopWordsFile = open("Stopwords", "r")
+stopwords= [word.replace("\n","") for word in StopWordsFile]
+StopWordsFile.close()
+
 
 def processAllPatents(allPatentsTree):
     patentsProcessed = 0
@@ -25,30 +38,53 @@ def processPatentOrApp(inputFileName, isPatent):
     # parser = etree.XMLParser(resolve_entities=False, target=applicationTreeBuilder())
     parser = etree.XMLParser(resolve_entities=False)
     allAppsTree = etree.parse(f, parser)
-    # print('result tag=', documentTree.tag) # the root's tag is us-patent-application
-    # root = documentTree
     elapsed_time = time() - start_time
     print('parsing took ', elapsed_time, ' seconds')
     if isPatent:
         (numProcessed) = processAllPatents(allAppsTree)
         print('%d patents processed' % numProcessed)
 
+def lemmatize(text):
+    # Extracts roots of words
+    lemma = " "
+    for w in text:
+        if(not w.lemma_ in stopwords):
+            lemma+= re.sub(r"[0-9]+"," ", w.lemma_) + " "
+    return lemma
+
+def check_similarity(phrase1, phrase2):
+    return phrase1.similarity(phrase2)
 
 def combineInfo(graph):
 	combined_info_dict = {}
 	nodes = graph.nodes_dict
 	for node in nodes:
 		ancestors = graph.find_ancestors(node)
-		info = nodes[node].info
+		info = ""		
+		claim_ref_p = re.findall(r"(.*)claim|$", info)
+		if(len(claim_ref_p)==0):
+			info = nodes[node].info.replace("\n", " ")
+		prev_ref = lemmatize(nlpL(str(claim_ref_p[0])))
+		prev_ref = nlp(prev_ref)
 		number = nodes[node].number
-		for ancestor in ancestors:
-			info += "\n" + nodes[ancestor].info
-
+		anc_rev = ancestors[::-1]
+		for ancestor in anc_rev:
+			prev_ref_a = re.findall(r"(.*)claim", nodes[ancestor].info.replace("\n", " "))
+			i = True
+			for p in prev_ref_a:
+				prev_ref_a = lemmatize(nlpL(p))
+				prev_ref_aN = nlp(prev_ref_a)
+				if(check_similarity(prev_ref_aN, prev_ref)==1):
+					i = False
+					info += "\n" + nodes[ancestor].info.replace(prev_ref_a, "\n")
+			if(i):
+			 	info += "\n" + nodes[ancestor].info
+		info += nodes[node].info.replace("\n", " ")
 		combined_info_dict[number] = info
-		info_nlp = nlp(info)
-		info_tokens = [token.text for token in info_nlp]
-
-		print("Claim number %s\n %s\n\n" %(number, info))
+		print("_________________________________________")
+		print("Claim number %s\n %s\n\n" % (number, info))
+		print("_________________________________________")
+		#print("Claim number %s\n %s\n\n" %(number, info))
 	return combined_info_dict
 
 def processAllInFolder(folderPath, isPatent):

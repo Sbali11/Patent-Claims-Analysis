@@ -9,6 +9,7 @@ import collections
 def add_to_dict(claim_xml_element, patent_edge_dict, patent_info_dict):
     claim_number_string = claim_xml_element.get("num")
     claimtext2 = ""
+    afterClaimRef = ""
     for el in claim_xml_element.iter():
         claimtext2 += '\n'
         # print('Element:', el, ' tag=', el.tag, ', num children=', len(list(el)))
@@ -18,12 +19,12 @@ def add_to_dict(claim_xml_element, patent_edge_dict, patent_info_dict):
     
         if el.tail != None:
             element_text = el.tail
-            # if element_text != '\n':
             if len(element_text.strip()) > 0:
                 # assert len(element_text) > 0, "element_text of claim is empty"
                 element_text = element_text.strip()
                 claimtext2 += element_text
-                
+                afterClaimRef += element_text
+
     patent_info_dict[claim_number_string]= claimtext2
     # get parents if any
     if(claim_number_string not in patent_edge_dict):
