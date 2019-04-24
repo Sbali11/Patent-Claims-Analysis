@@ -7,12 +7,6 @@ def processAllPatents(allPatentsTree):
         edges, infos = create_patent_dict(app)
         graph_class = ClaimSet(app)
 
-        
-        
-        for claimID in graph_class.nodes_dict.keys():
-            print(claimID)
-            print(graph_class.find_descendants(claimID))
-
         patentsProcessed += 1
         if patentsProcessed % 1000 == 0:
             print(patentsProcessed,' patents processed')
