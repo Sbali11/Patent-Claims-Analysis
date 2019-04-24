@@ -112,7 +112,7 @@ class ClaimSet(object):
         for claim in self.patent_info_dict:
             if(claim not in self.nodes_dict):
                 Node(self, self.patent_edge_dict.get(claim, set()), 0, self.patent_info_dict[claim], claim)
-        print(self.patent_info_dict)
+        #print(self.patent_info_dict)
 
 
         '''
@@ -168,6 +168,31 @@ class ClaimSet(object):
         ancestors.sort(key = lambda node: self.nodes_dict[node].depth)
         return ancestors
 
+    #creates a list of descendants (in order of depth) for the given claim
+    def find_descendants(self, number): 
+        assert(number in self.nodes_dict)
+        descendants = []
+        if number in self.children.keys():
+            level = self.children[number]
+        else :
+            level = []
+        while len(level) > 0:
+            newLevel = []
+            for child in level:
+                childID = child.number
+                newLevel += list(self.children.get(childID, set()))
+            descendants += [k.number for k in level]
+            level = newLevel
+        return descendants
+
+    #gets number of ancestors of the given claim (depth)
+    def get_num_ancestors(self, number):
+        return ((self.nodes_dict)[number]).depth
+
+    #gets the number of descendants of the given claim
+    def get_num_descendants(self, number):
+        return len(find_descendants(self, number))
+
     #gives a list of independent claims in the patent
     def find_independent_claims(self):
         nodes = [node for node in self.nodes_dict]
@@ -200,3 +225,7 @@ class ClaimSet(object):
         for leaf in self.connected_comps:
             if number in self.connected_comps[leaf]:
                 return self.connected_comps[leaf]
+
+
+
+
