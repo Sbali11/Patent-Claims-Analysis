@@ -6,9 +6,10 @@ from gensim.summarization import keywords
 import spacy
 import requests
 
-nlpNP = spacy.load('en', disable = ['textcat'])
-nlp = spacy.load('en')
-nlpL = spacy.load('en', disable=['ner', 'parser'])
+#if 'en_core_web_sm' doesn't work, try 'en': check spacy/data to see what the package installed on your machine is called
+nlpNP = spacy.load('en_core_web_sm', disable = ['textcat'])
+nlp = spacy.load('en_core_web_sm')
+nlpL = spacy.load('en_core_web_sm', disable=['ner', 'parser'])
 nlpL.add_pipe(nlpL.create_pipe('sentencizer'))
 
 
@@ -19,7 +20,7 @@ StopWordsFile.close()
 
 def processAllPatents(allPatentsTree):
     patentsProcessed = 0
-    
+
     for app in allPatentsTree.iter("us-patent-grant"):
         edges, infos = create_patent_dict(app)
         graph_class = ClaimSet(app)
@@ -56,36 +57,42 @@ def check_similarity(phrase1, phrase2):
     return phrase1.similarity(phrase2)
 
 def combineInfo(graph):
-	combined_info_dict = {}
-	nodes = graph.nodes_dict
-	for node in nodes:
-		ancestors = graph.find_ancestors(node)
-		info = ""		
-		claim_ref_p = re.findall(r"(.*)claim|$", info)
-		if(len(claim_ref_p)==0):
-			info = nodes[node].info.replace("\n", " ")
-		prev_ref = lemmatize(nlpL(str(claim_ref_p[0])))
-		prev_ref = nlp(prev_ref)
-		number = nodes[node].number
-		anc_rev = ancestors[::-1]
-		for ancestor in anc_rev:
-			prev_ref_a = re.findall(r"(.*)claim", nodes[ancestor].info.replace("\n", " "))
-			i = True
-			for p in prev_ref_a:
-				prev_ref_a = lemmatize(nlpL(p))
-				prev_ref_aN = nlp(prev_ref_a)
-				if(check_similarity(prev_ref_aN, prev_ref)==1):
-					i = False
-					info += "\n" + nodes[ancestor].info.replace(prev_ref_a, "\n")
-			if(i):
-			 	info += "\n" + nodes[ancestor].info
-		info += nodes[node].info.replace("\n", " ")
-		combined_info_dict[number] = info
-		print("_________________________________________")
-		print("Claim number %s\n %s\n\n" % (number, info))
-		print("_________________________________________")
-		#print("Claim number %s\n %s\n\n" %(number, info))
-	return combined_info_dict
+    combined_info_dict = {}
+    nodes = graph.nodes_dict
+    
+    for node in nodes:
+        ancestors = graph.find_ancestors(node)
+        info = ""
+        claim_ref_p = re.findall(r"(.*)claim|$", info)
+        if(len(claim_ref_p)==0):
+            info = node + nodes[node].info.replace("\n", " ")
+        prev_ref = lemmatize(nlpL(str(claim_ref_p[0])))
+        prev_ref = nlp(prev_ref)
+        number = nodes[node].number
+        anc_rev = ancestors[::-1]
+        anc_info = ""
+        for ancestor in ancestors:
+            prev_ref_a = re.split(".claim [0-9]*", nodes[ancestor].info.replace("\n", " "))[-1]
+            #print("prev_ref_a:", prev_ref_a)
+            i = True
+            for p in [prev_ref_a]:
+                prev_ref_a = lemmatize(nlpL(p))
+                prev_ref_aN = nlp(prev_ref_a)
+                if(check_similarity(prev_ref_aN, prev_ref)==1):
+                    i = False
+                    anc_info += ("\n" + prev_ref_a + " ; ")
+            if(i):
+                anc_info = "\n" + prev_ref_a  + "; " + anc_info#nodes[ancestor].info
+        
+        
+        info += nodes[node].info.replace("\n", " ")
+        info = anc_info  + info
+        combined_info_dict[number] = info
+        print("_________________________________________")
+        print("Claim number", number,"\n", info)
+        print("_________________________________________")
+        #print("Claim number" ,number, "\n", info)
+    return combined_info_dict
 
 def processAllInFolder(folderPath, isPatent):
     for single_root_file in os.listdir(folderPath):
@@ -93,7 +100,7 @@ def processAllInFolder(folderPath, isPatent):
             print(single_root_file)
             singleRootFilePath = os.path.join(folderPath, single_root_file)
             processPatentOrApp(singleRootFilePath, isPatent)
-            
+
 
 
 if __name__ == "__main__":
