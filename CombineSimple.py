@@ -11,13 +11,55 @@ nlpNP = spacy.load('en_core_web_sm', disable = ['textcat'])
 nlp = spacy.load('en_core_web_sm')
 nlpL = spacy.load('en_core_web_sm', disable=['ner', 'parser'])
 nlpL.add_pipe(nlpL.create_pipe('sentencizer'))
-
+ 
 
 StopWordsFile = open("Stopwords", "r")
 stopwords= [word.replace("\n","") for word in StopWordsFile]
 StopWordsFile.close()
 
+def getNounPhrases(doc):
+    noun_phrases = [np.text for np in doc.noun_chunks] 
+    all_nouns =  list([str(word.text) for word in doc if str(word.pos_)== 'NOUN'])  
+    noun_phrases+=all_nouns
+    return noun_phrases
 
+
+def get_noun_chunks(node, graph):
+    
+    info = ""       
+    claim_ref_p = re.findall(r"(.*)claim|$", nodes[node].info)
+    if(len(claim_ref_p)==0):
+        info = nodes[node].info.replace("\n", " ")
+    else:
+        prev_ref = lemmatize(nlpL(str(claim_ref_p[0])))
+    prev_ref = nlp(prev_ref)
+    number = nodes[node].number
+    node_np = getNounPhrases(nlp(nodes[node].info))
+    
+    return node_np
+
+def get_noun_chunks_ancestors(node, graph):
+    info_anc = []
+    nodes = graph.nodes_dict
+    ancestors = graph.find_ancestors(node)
+    info = ""       
+    claim_ref_p = re.findall(r"(.*)claim|$", nodes[node].info)
+    if(len(claim_ref_p)==0):
+        info = nodes[node].info.replace("\n", " ")
+    else:
+        info = str(claim_ref_p[0])
+    prev_ref = lemmatize(nlpL(info))
+    prev_ref = nlp(prev_ref)
+    number = nodes[node].number
+    anc_rev = ancestors[::-1]
+    node_np = getNounPhrases(nlp(nodes[node].info))
+    all_info = {}
+    for ancestor in anc_rev:
+        prev_ref_np = getNounPhrases(nlp(nodes[ancestor].info))
+        info_anc.append(prev_ref_np)
+    return info_anc
+        
+        
 def processAllPatents(allPatentsTree):
     patentsProcessed = 0
 
