@@ -21,7 +21,8 @@ def add_to_dict(claim_xml_element, patent_edge_dict, patent_info_dict):
     
     
     for el in claim_xml_element.iter() :
-        if len(re.findall("claim [0-9]*", el.text)) > 0:
+
+        if el.text!=None and len(re.findall("claim [0-9]*", el.text)) > 0 :
             seen_ref = False
     
     for el in claim_xml_element.iter() :

@@ -17,15 +17,17 @@ StopWordsFile = open("Stopwords", "r")
 stopwords= [word.replace("\n","") for word in StopWordsFile]
 StopWordsFile.close()
 
+def getNouns(doc):
+    all_nouns =  list([str(word.text) for word in doc if str(word.pos_)== 'NOUN'])  
+    return all_nouns
+    
 def getNounPhrases(doc):
     noun_phrases = [np.text for np in doc.noun_chunks] 
     all_nouns =  list([str(word.text) for word in doc if str(word.pos_)== 'NOUN'])  
     noun_phrases+=all_nouns
     return noun_phrases
 
-
 def get_noun_chunks(node, graph):
-    
     info = ""       
     claim_ref_p = re.findall(r"(.*)claim|$", nodes[node].info)
     if(len(claim_ref_p)==0):
@@ -35,7 +37,6 @@ def get_noun_chunks(node, graph):
     prev_ref = nlp(prev_ref)
     number = nodes[node].number
     node_np = getNounPhrases(nlp(nodes[node].info))
-    
     return node_np
 
 def get_noun_chunks_ancestors(node, graph):
@@ -59,7 +60,7 @@ def get_noun_chunks_ancestors(node, graph):
         info_anc.append(prev_ref_np)
     return info_anc
         
-        
+
 def processAllPatents(allPatentsTree):
     patentsProcessed = 0
 
@@ -101,30 +102,31 @@ def check_similarity(phrase1, phrase2):
 def combineInfo(graph):
     combined_info_dict = {}
     nodes = graph.nodes_dict
-    
     for node in nodes:
         ancestors = graph.find_ancestors(node)
         info = ""
         claim_ref_p = re.findall(r"(.*)claim|$", info)
         if(len(claim_ref_p)==0):
             info = node + nodes[node].info.replace("\n", " ")
-        prev_ref = lemmatize(nlpL(str(claim_ref_p[0])))
-        prev_ref = nlp(prev_ref)
+        else:
+            prev_ref = lemmatize(nlpL(str(claim_ref_p[0])))
+            prev_ref = nlp(prev_ref)
         number = nodes[node].number
         anc_rev = ancestors[::-1]
         anc_info = ""
         for ancestor in ancestors:
-            prev_ref_a = re.split(".claim [0-9]*", nodes[ancestor].info.replace("\n", " "))[-1]
+            prev_ref_a = prev_ref_a = re.findall(r"(.*)claim", nodes[ancestor].info.replace("\n", " "))
+            #re.split(".claim [0-9]*", nodes[ancestor].info.replace("\n", " "))[-1]
             #print("prev_ref_a:", prev_ref_a)
             i = True
-            for p in [prev_ref_a]:
-                prev_ref_a = lemmatize(nlpL(p))
-                prev_ref_aN = nlp(prev_ref_a)
+            for p in prev_ref_a:
+                prev_ref_a1 = lemmatize(nlpL(p))
+                prev_ref_aN = nlp(prev_ref_a1)
                 if(check_similarity(prev_ref_aN, prev_ref)==1):
                     i = False
-                    anc_info += ("\n" + prev_ref_a + " ; ")
+                    anc_info += ("\n" + nodes[ancestor].info.replace(prev_ref_a1, "\n") + " ; ")
             if(i):
-                anc_info = "\n" + prev_ref_a  + "; " + anc_info#nodes[ancestor].info
+                anc_info = "\n" + nodes[ancestor].info + "; " + anc_info#nodes[ancestor].info
         
         
         info += nodes[node].info.replace("\n", " ")
