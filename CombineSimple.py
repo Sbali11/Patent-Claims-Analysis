@@ -17,9 +17,31 @@ StopWordsFile = open("Stopwords", "r")
 stopwords= [word.replace("\n","") for word in StopWordsFile]
 StopWordsFile.close()
 
-def getNouns(doc):
-    all_nouns =  list([str(word.text) for word in doc if str(word.pos_)== 'NOUN'])  
-    return all_nouns
+def strip_before(text):
+    i = 0
+    textList = text.split()
+    for w in textList:
+        if(w.lower() not in stopwords):
+            break
+        i+=1
+    return textList[i:]
+
+def strip_after(textList):
+    i = 0
+    last_not_stop = -1
+    for w in textList:
+        if(w.lower() not in stopwords):
+            last_not_stop = i
+        i+=1
+    return textList[:last_not_stop+1]
+
+
+
+def strip(text):
+    stripped_b = strip_before(text)
+    stripped_a = strip_after(stripped_b)
+    return " ".join(stripped_a)
+
     
 def getNounPhrases(doc):
     noun_phrases = [np.text for np in doc.noun_chunks] 
@@ -39,6 +61,13 @@ def get_noun_chunks(node, graph):
     node_np = getNounPhrases(nlp(nodes[node].info))
     return node_np
 
+def getNouns(node, graph):
+    all_np = get_noun_chunks(node, graph)
+    final_np = []
+    for np in all_np:
+        final_np.append(strip(np))
+    return final_np
+
 def get_noun_chunks_ancestors(node, graph):
     info_anc = []
     nodes = graph.nodes_dict
@@ -53,10 +82,10 @@ def get_noun_chunks_ancestors(node, graph):
     prev_ref = nlp(prev_ref)
     number = nodes[node].number
     anc_rev = ancestors[::-1]
-    node_np = getNounPhrases(nlp(nodes[node].info))
+    node_np = getNouns(nlp(nodes[node].info))
     all_info = {}
     for ancestor in anc_rev:
-        prev_ref_np = getNounPhrases(nlp(nodes[ancestor].info))
+        prev_ref_np = getNouns(nlp(nodes[ancestor].info))
         info_anc.append(prev_ref_np)
     return info_anc
         
