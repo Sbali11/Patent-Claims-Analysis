@@ -35,8 +35,6 @@ def strip_after(textList):
         i+=1
     return textList[:last_not_stop+1]
 
-
-
 def strip(text):
     stripped_b = strip_before(text)
     stripped_a = strip_after(stripped_b)
